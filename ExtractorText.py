@@ -43,7 +43,7 @@ class ModelExtract(Model):
         df = df.fillna("")
         df.text = df.text.apply(lambda x: re.sub(r"[^\u4e00-\u9fef]", "", x))
         ds_test = self.Data(df, self.tokenizer, self.max_length)
-        # ds_test = self.ds_valid
+        ds_test = self.ds_valid
         return DataLoader(ds_test, self.batch_size, num_workers = 4)
 
 model = ModelExtract(
@@ -72,7 +72,11 @@ trainer = pl.Trainer(
     progress_bar_refresh_rate = 1
 )
 
-ckpts = [_ for _ in glob.glob("./wandb/**/*.ckpt", recursive = True) if re.search("(?=.*rbt_.*)(?=.*last.*)", _) is not None and re.search("(noclip|latest)", _) is None]
+ckpts = [
+    "wandb/offline-run-20210701_112558-rbt3_drop0.3_ep30_lr1e-4_bs64_mlen256_0/files/baseline_text/rbt3_drop0.3_ep30_lr1e-4_bs64_mlen256_0/checkpoints/epoch=25_valid_metric=0.813.ckpt",
+    # "./wandb/offline-run-20210706_102925-rbt_drop0.3_ep30_lr2e-5_bs64_mlen256_1/files/baseline/rbt_drop0.3_ep30_lr2e-5_bs64_mlen256_1/checkpoints/epoch=27_valid_metric=0.806.ckpt",
+    # "wandb/offline-run-20210713_135611-rbt_drop0.3_ep30_lr2e-5_bs64_mlen256_2/files/baseline/rbt_drop0.3_ep30_lr2e-5_bs64_mlen256_2/checkpoints/epoch=23_valid_metric=0.806.ckpt"
+]
 preds = []
 for ckpt in ckpts:
     model = model.load_from_checkpoint(ckpt)
@@ -82,7 +86,7 @@ for ckpt in ckpts:
     preds.append(pred)
 preds = np.stack(preds)
 
-np.save("./data/test_tex.npy", preds)
+np.save("./data/valid_tex.npy", preds)
 
 
 # df = model.predict_dataloader().dataset.df
