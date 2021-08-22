@@ -1,4 +1,6 @@
 # Created by .ignore support plugin (hsz.mobi)
+tmp*
+autoalbu/*/outputs
 logs/
 data/
 .vscode/

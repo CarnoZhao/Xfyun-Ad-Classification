@@ -4,26 +4,22 @@ os.environ["CUDA_VISIBLE_DEVICES"] = gpus
 import warnings
 warnings.filterwarnings("ignore")
 
-import cv2
+import re
 import glob
 import numpy as np
 import pandas as pd
-from PIL import Image
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import StratifiedKFold
 
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
-import albumentations as A
-from albumentations.pytorch import ToTensorV2
+import transformers
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
-import timm
 from utils.loss.smooth import LabelSmoothingLoss
 from utils.mixup import mixup_data, mixup_criterion
 pl.seed_everything(0)
-
 
 class Model(pl.LightningModule):
     def __init__(self, **args):
@@ -31,7 +27,10 @@ class Model(pl.LightningModule):
         for k, v in args.items():
             setattr(self, k, v)
         self.args = args
-        self.model = timm.create_model(self.model_name, pretrained = True, num_classes = self.num_classes, drop_rate = self.drop_rate)
+        self.model = transformers.BertForSequenceClassification.from_pretrained(self.model_name)
+        self.model.dropout = nn.Dropout(self.drop_rate)
+        self.model.classifier = nn.Linear(self.model.classifier.in_features, self.num_classes)
+        self.tokenizer = transformers.BertTokenizer.from_pretrained(self.model_name)
         self.criterion = LabelSmoothingLoss(classes = self.num_classes, smoothing = self.smoothing)
         self.save_hyperparameters()
 
@@ -43,11 +42,16 @@ class Model(pl.LightningModule):
                 setattr(self, k, v)
         
         def __getitem__(self, idx):
-            image = np.array(Image.open(self.df.loc[idx, "file_name"]).convert(mode = "RGB"))
-            label = np.array(self.df.loc[idx, "label"])
-            if self.trans is not None:
-                image = self.trans(image = image)["image"]
-            return image, label
+            label = self.df.loc[idx, "label"]
+            text = self.df.loc[idx, "text"]
+            tok = self.trans.encode_plus(
+                text,
+                add_special_tokens = True,
+                truncation = 'longest_first',
+                max_length = self.max_length,
+                padding="max_length")
+            tok = {k: np.array(v).astype(np.long) for k, v in tok.items()}
+            return tok, label
 
         def __len__(self):
             return len(self.df)
@@ -58,10 +62,13 @@ class Model(pl.LightningModule):
         df["label"] = df.file_name.apply(lambda x: int(os.path.basename(os.path.dirname(x))))
         split = StratifiedKFold(5, shuffle = True, random_state = 0)
         train_idx, valid_idx = list(split.split(df, y = df.label))[self.fold]
-        self.df_train = df.loc[train_idx].reset_index(drop = True)
-        self.df_valid = df.loc[valid_idx].reset_index(drop = True)
-        self.ds_train = self.Data(self.df_train, self.trans_train, **self.args)
-        self.ds_valid = self.Data(self.df_valid, self.trans_valid, **self.args)
+        df = df.merge(pd.read_csv("./data/train.tsv", sep = "\t"), on = "file_name")
+        df = df.fillna("")
+        df.text = df.text.apply(lambda x: re.sub(r"[^\u4e00-\u9fef]", "", x))
+        self.df_train = df.loc[train_idx[np.isin(train_idx, df.index)]].reset_index(drop = True)
+        self.df_valid = df.loc[valid_idx[np.isin(valid_idx, df.index)]].reset_index(drop = True)
+        self.ds_train = self.Data(self.df_train, self.tokenizer, **self.args)
+        self.ds_valid = self.Data(self.df_valid, self.tokenizer, **self.args)
 
     def train_dataloader(self):
         return DataLoader(self.ds_train, self.batch_size, shuffle = True, num_workers = 4)
@@ -79,7 +86,8 @@ class Model(pl.LightningModule):
         self.logger.log_hyperparams(self.hparams, metrics = metric_placeholder)
 
     def forward(self, x):
-        return self.model(x)
+        out = self.model(**x)["logits"]
+        return out
 
     def training_step(self, batch, batch_idx):
         x, y = batch
@@ -110,31 +118,19 @@ class Model(pl.LightningModule):
         self.log("valid_metric", acc, prog_bar = True)
 
 args = dict(
-    learning_rate = 2e-3,
-    model_name = "tf_efficientnet_b3_ns",
+    learning_rate = 2e-5,
+    model_name = "hfl/chinese-roberta-wwm-ext",
     num_epochs = 30,
-    batch_size = 128,
+    batch_size = 64,
     fold = 0,
     num_classes = 137,
     smoothing = 0.01,
-    alpha = 0.4,
-    image_size = 384,
+    alpha = 0,
+    max_length = 256,
     drop_rate = 0.3,
-    name = "b3ns",
-    version = "v2"
+    name = "text/rbt",
+    version = "v1"
 )
-args['trans_train'] = A.Compose([
-    A.Resize(args['image_size'], args['image_size']),
-    A.HorizontalFlip(),
-    A.ColorJitter(),
-    A.PadIfNeeded(args['image_size'], args['image_size'], border_mode = cv2.BORDER_CONSTANT, value = 0),
-    A.Normalize(),
-    ToTensorV2()])
-args['trans_valid'] = A.Compose([
-    A.Resize(args['image_size'], args['image_size']),
-    A.PadIfNeeded(args['image_size'], args['image_size'], border_mode = cv2.BORDER_CONSTANT, value = 0),
-    A.Normalize(),
-    ToTensorV2()])
 
 if __name__ == "__main__":
     logger = TensorBoardLogger("./logs", name = args["name"], version = args["version"], default_hp_metric = False)

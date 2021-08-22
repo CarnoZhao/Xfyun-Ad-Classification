@@ -1,0 +1,72 @@
+# @package _global_
+
+_version: 2  # An internal value that indicates a version of the config schema. This value is used by
+# `autoalbument-search` and `autoalbument-migrate` to upgrade the config to the latest version if necessary.
+# Please do not change it manually.
+
+
+task: classification # Deep learning task. Should either be `classification` or `semantic_segmentation`.
+
+
+policy_model:
+# Configuration for Policy model which is used to augment input images.
+
+  num_sub_policies: 40
+# Number of augmentation sub-policies. When an image passes through an augmentation pipeline, Faster AutoAugment
+# randomly chooses one sub-policy and uses augmentations from that sub-policy to transform an input image. A larger
+# number of sub-policies leads to a more diverse set of augmentations and better performance of a model trained on
+# augmented images. However, an increase in the number of sub-policies leads to the exponential growth of a search
+# space of augmentations, so you need more training data for Policy Model to find good augmentation policies.
+
+  num_chunks: 4
+# Number of chunks in a batch. Faster AutoAugment splits each batch of images into `num_chunks` chunks. Then it
+# applies the same sub-policy with the same parameters to each image in a chunk. This parameter controls the tradeoff
+# between the speed of augmentation search and diversity of augmentations. Larger `num_chunks` values will lead to
+# faster searching but less diverse set of augmentations. Note that this parameter is used only in the searching
+# phase. When you train a model with found sub-policies, Albumentations will apply a distinct set of transformations
+# to each image separately.
+
+classification_model:
+# Settings for Classification Model that is used for two purposes:
+# 1. As a model that performs classification of input images.
+# 2. As a Discriminator for Policy Model.
+
+  num_classes: 60
+# Number of classes in the dataset. The dataset implementation should return an integer in the range
+# [0, num_classes - 1] as a class label of an image.
+
+  architecture: tf_efficientnet_b3_ns
+# Architecture of Classification Model. The default implementation of Classification model in AutoAlbument uses
+# models from https://github.com/rwightman/pytorch-image-models/. Please refer to its documentation to get a list of
+# available models - https://rwightman.github.io/pytorch-image-models/#list-models-with-pretrained-weights.
+
+  pretrained: true
+# Boolean flag that indicates whether the selected model architecture should load pretrained weights or use randomly
+# initialized weights.
+
+
+data:
+  dataset:
+    _target_: dataset.SearchDataset
+  # Class for instantiating a PyTorch dataset.
+
+  normalization:
+    mean: [0.485, 0.456, 0.406]
+    std: [0.229, 0.224, 0.225]
+# Normalization values for images. For each image, the search pipeline will subtract `mean` and divide by `std`.
+# Normalization is applied after transforms defined in `preprocessing`. Note that regardless of `input_dtype`,
+# the normalization function will always receive a `float32` input with values in the range [0.0, 1.0], so you should
+# define `mean` and `std` values accordingly. ImageNet normalization is used by default.
+
+
+  dataloader:
+    batch_size: 32
+trainer:
+  gpus: 1
+# Number of GPUs to train on. Set to `0` or None` to use CPU for training.
+# More detailed description - https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html#gpus
+
+  max_epochs: 20
+# Number of epochs to search for augmentation parameters.
+# More detailed description - https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html#max-epochs
+
