@@ -20,7 +20,7 @@ from albumentations.pytorch import ToTensorV2
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 import timm
-from utils.loss.smooth import LabelSmoothingLoss
+from utils.loss.smooth import LabelSmoothingLoss, SoftCrossEntropyLoss
 from utils.mixup import mixup_data, mixup_criterion
 pl.seed_everything(0)
 
@@ -34,7 +34,16 @@ class Model(pl.LightningModule):
             self.num_classes = self.classes
         self.args = args
         self.model = timm.create_model(self.model_name, pretrained = True, num_classes = self.num_classes, drop_rate = self.drop_rate)
+        self.model.reset_classifier(self.num_classes)
+
+        self.teacher = timm.create_model(self.model_name, pretrained = True, num_classes = self.num_classes, drop_rate = self.drop_rate)
+        self.teacher.load_state_dict({k[6:]: v for k, v in torch.load(self.teacher_path)["state_dict"].items()})
+        self.teacher.eval()
+        self.teacher.requires_grad_(False)
+
         self.criterion = LabelSmoothingLoss(classes = self.num_classes, smoothing = self.smoothing)
+        self.teacher_criterion = SoftCrossEntropyLoss()
+
         self.save_hyperparameters()
 
     class Data(Dataset):
@@ -84,24 +93,29 @@ class Model(pl.LightningModule):
         self.logger.log_hyperparams(self.hparams, metrics = metric_placeholder)
 
     def forward(self, x):
-        return self.model(x)
+        return self.model(x), self.teacher(x)
 
     def training_step(self, batch, batch_idx):
         x, y = batch
         if self.alpha != 0:
             x, ya, yb, lam = mixup_data(x, y, self.alpha)
-            yhat = self(x)
-            loss = mixup_criterion(self.criterion, yhat, ya, yb, lam)
+            yhat, yteacher = self(x)
+            hard_loss = mixup_criterion(self.criterion, yhat, ya, yb, lam)
+            soft_loss = self.teacher_criterion(yhat, yteacher)
         else:
-            yhat = self(x)
-            loss = self.criterion(yhat, y)
+            yhat, yteacher = self(x)
+            hard_loss = self.criterion(yhat, y)
+            soft_loss = self.teacher_criterion(yhat, yteacher)
+        loss = hard_loss + soft_loss
         self.log("train_loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        yhat = self(x)
-        loss = self.criterion(yhat, y)
+        yhat, yteacher = self(x)
+        hard_loss = self.criterion(yhat, y)
+        soft_loss = self.teacher_criterion(yhat, yteacher)
+        loss = hard_loss + soft_loss
         self.log("valid_loss", loss, prog_bar = True)
         return y, yhat
 
@@ -117,9 +131,10 @@ class Model(pl.LightningModule):
 args = dict(
     learning_rate = 1e-3,
     model_name = "eca_nfnet_l1",
+    teacher_path = "./logs/image/nfl1/sorted_fold0/checkpoints/epoch=29_valid_metric=0.872.ckpt",
     num_epochs = 30,
     batch_size = 64,
-    fold = -1,
+    fold = 0,
     num_classes = 137,
     smoothing = 0.1,
     classes = None,
@@ -127,7 +142,7 @@ args = dict(
     image_size = 384,
     drop_rate = 0.3,
     name = "image/nfl1",
-    version = "sorted_all"
+    version = "self_distill_fold0"
 )
 args['trans_train'] = A.Compose([
     A.Resize(args['image_size'], args['image_size']),

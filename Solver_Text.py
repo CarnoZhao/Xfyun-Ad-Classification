@@ -35,15 +35,21 @@ class Model(pl.LightningModule):
         self.save_hyperparameters()
 
     class Data(Dataset):
-        def __init__(self, df, trans, **args):
+        def __init__(self, df, trans, is_train, **args):
             self.df = df
             self.trans = trans
+            self.is_train = is_train
             for k, v in args.items():
                 setattr(self, k, v)
         
         def __getitem__(self, idx):
             label = self.df.loc[idx, "label"]
             text = self.df.loc[idx, "text"]
+            if self.is_train:
+                text = text.split("，")
+                np.random.shuffle(text)
+                text = "".join(text)
+            text = re.sub(r"[^\u4e00-\u9fef]", "", text)
             tok = self.trans.encode_plus(
                 text,
                 add_special_tokens = True,
@@ -57,18 +63,18 @@ class Model(pl.LightningModule):
             return len(self.df)
 
     def prepare_data(self):
-        file_names = glob.glob("./data/train/*/*.jpg")
+        file_names = sorted(glob.glob("./data/train/*/*.jpg"))
         df = pd.DataFrame({"file_name": file_names})
         df["label"] = df.file_name.apply(lambda x: int(os.path.basename(os.path.dirname(x))))
         split = StratifiedKFold(5, shuffle = True, random_state = 0)
         train_idx, valid_idx = list(split.split(df, y = df.label))[self.fold]
         df = df.merge(pd.read_csv("./data/train.tsv", sep = "\t"), on = "file_name")
         df = df.fillna("")
-        df.text = df.text.apply(lambda x: re.sub(r"[^\u4e00-\u9fef]", "", x))
-        self.df_train = df.loc[train_idx[np.isin(train_idx, df.index)]].reset_index(drop = True)
-        self.df_valid = df.loc[valid_idx[np.isin(valid_idx, df.index)]].reset_index(drop = True)
-        self.ds_train = self.Data(self.df_train, self.tokenizer, **self.args)
-        self.ds_valid = self.Data(self.df_valid, self.tokenizer, **self.args)
+        # df.text = df.text.apply(lambda x: re.sub(r"[^\u4e00-\u9fef]", "", x))
+        self.df_train = df.loc[train_idx].reset_index(drop = True) if self.fold != -1 else df.reset_index(drop = True)
+        self.df_valid = df.loc[valid_idx].reset_index(drop = True)
+        self.ds_train = self.Data(self.df_train, self.tokenizer, is_train = True, **self.args)
+        self.ds_valid = self.Data(self.df_valid, self.tokenizer, is_train = False, **self.args)
 
     def train_dataloader(self):
         return DataLoader(self.ds_train, self.batch_size, shuffle = True, num_workers = 4)
@@ -122,14 +128,14 @@ args = dict(
     model_name = "hfl/chinese-roberta-wwm-ext",
     num_epochs = 30,
     batch_size = 64,
-    fold = 0,
+    fold = -1,
     num_classes = 137,
-    smoothing = 0.01,
+    smoothing = 0.1,
     alpha = 0,
     max_length = 256,
     drop_rate = 0.3,
     name = "text/rbt",
-    version = "v1"
+    version = "sorted_all"
 )
 
 if __name__ == "__main__":

@@ -1,13 +1,13 @@
 from Solver_Text import *
 ab = "B"
-val = True
+val = ""
 args["fold"] = 0
 
 class ModelPred(Model):
     def __init__(self, **args):
         super(ModelPred, self).__init__(**args)
 
-    def predict_step(self, batch, batch_idx, dataloader_idx):
+    def predict_step(self, batch, batch_idx):
         x, y = batch
         yhat = self(x)
         return yhat
@@ -20,7 +20,7 @@ class ModelPred(Model):
         df_test = df_test.fillna("")
         if val:
             df_test = self.df_valid
-        self.ds_test = self.Data(df_test, self.tokenizer, **self.args)
+        self.ds_test = self.Data(df_test, self.tokenizer, is_train = False, **self.args)
         return DataLoader(self.ds_test, self.batch_size, num_workers = 4)
 
 trainer = pl.Trainer(
@@ -33,7 +33,8 @@ trainer = pl.Trainer(
 
 ckpts = [
     "./logs/text/rbt/fold0/checkpoints/epoch=25_valid_metric=0.810.ckpt",
-    # "./logs/text/rbt/fold1/checkpoints/epoch=28_valid_metric=0.806.ckpt"
+    "./logs/text/rbt/fold1/checkpoints/epoch=28_valid_metric=0.806.ckpt",
+    "./logs/text/rbt/sorted_all/checkpoints/epoch=28_valid_metric=0.956.ckpt"
 ]
 
 preds = []
@@ -45,4 +46,4 @@ for ckpt in ckpts:
     preds.append(pred)
 
 preds = np.stack(preds)
-np.save(f"./data/{'valid' if val else 'test'}{ab}_tex.npy", preds)
+np.save(f"./data/features/{'valid' if val else ('test' + ab)}_tex.npy", preds)
