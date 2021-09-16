@@ -32,9 +32,14 @@ trainer = pl.Trainer(
 )
 
 ckpts = [
-    "./logs/text/rbt/fold0/checkpoints/epoch=25_valid_metric=0.810.ckpt",
-    "./logs/text/rbt/fold1/checkpoints/epoch=28_valid_metric=0.806.ckpt",
-    "./logs/text/rbt/sorted_all/checkpoints/epoch=28_valid_metric=0.956.ckpt"
+    # "./logs/text/rbt/fold0/checkpoints/epoch=25_valid_metric=0.810.ckpt",
+    # "./logs/text/rbt/fold1/checkpoints/epoch=28_valid_metric=0.806.ckpt",
+    # "./logs/text/rbt/sorted_all/checkpoints/epoch=28_valid_metric=0.956.ckpt",
+    # "./logs/text/bt/sorted_all/checkpoints/epoch=29_valid_metric=0.966.ckpt",
+    # "./logs/text/btwwm/sorted_all/checkpoints/epoch=27_valid_metric=0.965.ckpt"
+    # "./logs/text/eleb/sorted_all/checkpoints/epoch=29_valid_metric=0.961.ckpt",
+    # "./logs/text/xlb/sorted_all/checkpoints/epoch=29_valid_metric=0.956.ckpt",
+    "./logs/text/bthug/sorted_all/checkpoints/epoch=27_valid_metric=0.965.ckpt"
 ]
 
 preds = []
@@ -43,7 +48,8 @@ for ckpt in ckpts:
     model = model.load_from_checkpoint(ckpt)
     pred = trainer.predict(model)
     pred = torch.cat(pred).softmax(1).detach().cpu().numpy()
+    np.save(f"./data/features/{'valid' if val else ('test' + ab)}_{ckpt.split('/')[2]}_{ckpt.split('/')[3]}_{ckpt.split('/')[4]}.npy", pred)
     preds.append(pred)
 
-preds = np.stack(preds)
-np.save(f"./data/features/{'valid' if val else ('test' + ab)}_tex.npy", preds)
+# preds = np.stack(preds)
+# np.save(f"./data/features/{'valid' if val else ('test' + ab)}_tex.npy", preds)
