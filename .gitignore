@@ -1,6 +1,7 @@
 # Created by .ignore support plugin (hsz.mobi)
 tmp*
 autoalbu/*/outputs
+saliency/
 logs/
 data/
 .vscode/

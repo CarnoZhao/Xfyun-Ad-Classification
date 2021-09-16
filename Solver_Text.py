@@ -1,4 +1,4 @@
-gpus = "0,1"
+gpus = "1"
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = gpus
 import warnings
@@ -27,10 +27,18 @@ class Model(pl.LightningModule):
         for k, v in args.items():
             setattr(self, k, v)
         self.args = args
-        self.model = transformers.BertForSequenceClassification.from_pretrained(self.model_name)
+        self.model = transformers.AutoModelForSequenceClassification.from_pretrained(self.model_name)
         self.model.dropout = nn.Dropout(self.drop_rate)
-        self.model.classifier = nn.Linear(self.model.classifier.in_features, self.num_classes)
-        self.tokenizer = transformers.BertTokenizer.from_pretrained(self.model_name)
+        if "bert" in self.model_name:
+            in_features = self.model.classifier.in_features
+            self.model.classifier = nn.Linear(in_features, self.num_classes)
+        elif "xlnet" in self.model_name:
+            in_features = self.model.logits_proj.in_features
+            self.model.logits_proj = nn.Linear(in_features, self.num_classes)
+        else:
+            in_features = self.model.classifier.out_proj.in_features
+            self.model.classifier.out_proj = nn.Linear(in_features, self.num_classes)
+        self.tokenizer = transformers.AutoTokenizer.from_pretrained(self.model_name)
         self.criterion = LabelSmoothingLoss(classes = self.num_classes, smoothing = self.smoothing)
         self.save_hyperparameters()
 
@@ -125,7 +133,7 @@ class Model(pl.LightningModule):
 
 args = dict(
     learning_rate = 2e-5,
-    model_name = "hfl/chinese-roberta-wwm-ext",
+    model_name = "bert-base-chinese",
     num_epochs = 30,
     batch_size = 64,
     fold = -1,
@@ -134,7 +142,8 @@ args = dict(
     alpha = 0,
     max_length = 256,
     drop_rate = 0.3,
-    name = "text/rbt",
+    swa = False,
+    name = "text/bthug",
     version = "sorted_all"
 )
 
@@ -153,7 +162,7 @@ if __name__ == "__main__":
         accelerator = "dp",
         gradient_clip_val = 10,
         max_epochs = args["num_epochs"],
-        stochastic_weight_avg = True,
+        stochastic_weight_avg = args["swa"],
         logger = logger,
         progress_bar_refresh_rate = 10,
         callbacks = [callback]
