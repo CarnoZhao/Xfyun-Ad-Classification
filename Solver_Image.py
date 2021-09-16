@@ -1,4 +1,4 @@
-gpus = "0,1"
+gpus = "2,3"
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = gpus
 import warnings
@@ -22,7 +22,6 @@ from pytorch_lightning.loggers import TensorBoardLogger
 import timm
 from utils.loss.smooth import LabelSmoothingLoss
 from utils.mixup import mixup_data, mixup_criterion
-pl.seed_everything(0)
 
 
 class Model(pl.LightningModule):
@@ -115,8 +114,9 @@ class Model(pl.LightningModule):
         self.log("valid_metric", acc, prog_bar = True)
 
 args = dict(
+    seed = 0,
     learning_rate = 1e-3,
-    model_name = "eca_nfnet_l1",
+    model_name = "tf_efficientnet_b4_ns",
     num_epochs = 30,
     batch_size = 64,
     fold = -1,
@@ -124,10 +124,11 @@ args = dict(
     smoothing = 0.1,
     classes = None,
     alpha = 0.4,
+    swa = False,
     image_size = 384,
     drop_rate = 0.3,
-    name = "image/nfl1",
-    version = "sorted_all"
+    name = "image/b4ns",
+    version = "sorted_all_noclip"
 )
 args['trans_train'] = A.Compose([
     A.Resize(args['image_size'], args['image_size']),
@@ -149,6 +150,7 @@ args['trans_valid'] = A.Compose([
     ToTensorV2()])
 
 if __name__ == "__main__":
+    pl.seed_everything(args["seed"])
     logger = TensorBoardLogger("./logs", name = args["name"], version = args["version"], default_hp_metric = False)
     callback = pl.callbacks.ModelCheckpoint(
         filename = '{epoch}_{valid_metric:.3f}',
@@ -161,9 +163,9 @@ if __name__ == "__main__":
         gpus = len(gpus.split(",")), 
         precision = 16, amp_backend = "native", amp_level = "O1", 
         accelerator = "dp",
-        gradient_clip_val = 10,
+        gradient_clip_val = 0,
         max_epochs = args["num_epochs"],
-        stochastic_weight_avg = True,
+        stochastic_weight_avg = args["swa"],
         logger = logger,
         progress_bar_refresh_rate = 10,
         callbacks = [callback]
