@@ -75,6 +75,7 @@ class Model(pl.LightningModule):
             label = np.load(self.pseudo_from)
             df = pd.DataFrame({"file_name": file_names, "label": label.tolist()})
             self.df_train = pd.concat([self.df_train, df]).reset_index(drop = True)
+            self.ds_valid = df
         self.ds_train = self.Data(self.df_train, self.trans_train, **self.args)
         self.ds_valid = self.Data(self.df_valid, self.trans_valid, **self.args)
 
@@ -126,19 +127,19 @@ class Model(pl.LightningModule):
 
 args = dict(
     learning_rate = 1e-3,
-    model_name = "eca_nfnet_l1",
+    model_name = "tf_efficientnet_b0_ns",
     num_epochs = 30,
     batch_size = 64,
     fold = -1,
     num_classes = 137,
     smoothing = 0.0,
     classes = None,
-    alpha = 0.1,
+    alpha = 0,
     image_size = 384,
     swa = False,
-    pseudo_from = "./data/pseudo/sub13.npy",
+    pseudo_from = "./data/pseudo/90655.npy",
     drop_rate = 0.1,
-    name = "pseudo/nfl1_fitter",
+    name = "pseudo/b0ns_fitter",
     version = "sorted_all"
 )
 args['trans_train'] = A.Compose([
