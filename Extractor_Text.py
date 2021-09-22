@@ -32,14 +32,9 @@ trainer = pl.Trainer(
 )
 
 ckpts = [
-    # "./logs/text/rbt/fold0/checkpoints/epoch=25_valid_metric=0.810.ckpt",
-    # "./logs/text/rbt/fold1/checkpoints/epoch=28_valid_metric=0.806.ckpt",
-    # "./logs/text/rbt/sorted_all/checkpoints/epoch=28_valid_metric=0.956.ckpt",
-    # "./logs/text/bt/sorted_all/checkpoints/epoch=29_valid_metric=0.966.ckpt",
-    # "./logs/text/btwwm/sorted_all/checkpoints/epoch=27_valid_metric=0.965.ckpt"
-    # "./logs/text/eleb/sorted_all/checkpoints/epoch=29_valid_metric=0.961.ckpt",
-    # "./logs/text/xlb/sorted_all/checkpoints/epoch=29_valid_metric=0.956.ckpt",
-    "./logs/text/bthug/sorted_all/checkpoints/epoch=27_valid_metric=0.965.ckpt"
+    "./logs/text/rbt/sorted_all/checkpoints/epoch=28_valid_metric=0.956.ckpt",
+    "./logs/text/bt/sorted_all/checkpoints/epoch=29_valid_metric=0.966.ckpt",
+    "./logs/text/btwwm/sorted_all/checkpoints/epoch=27_valid_metric=0.965.ckpt"
 ]
 
 preds = []

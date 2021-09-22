@@ -1,7 +1,7 @@
 from Solver_Image import *
 from sklearn.metrics import confusion_matrix, f1_score
 ab = "B"
-val = True
+val = False
 args["fold"] = 0
 
 class ModelPred(Model):
@@ -35,14 +35,15 @@ trainer = pl.Trainer(
 )
 
 ckpts = [
-    # "./logs/image/effv2m/fold0/checkpoints/epoch=22_valid_metric=0.869.ckpt",
-    # "./logs/image/effv2m/fold1/checkpoints/epoch=30_valid_metric=0.870.ckpt",
-    # "./logs/image/ev2s/fold0/checkpoints/epoch=28_valid_metric=0.864.ckpt",
-    # "./logs/image/ev2s/fold1/checkpoints/epoch=30_valid_metric=0.864.ckpt",
-    # "./logs/image/nfl1/sorted_all/checkpoints/epoch=22_valid_metric=0.983.ckpt",
-    # "./logs/image/ev2s/sorted_all/checkpoints/epoch=28_valid_metric=0.989.ckpt"
-    "./logs/image/nfl1/sorted_fold0/checkpoints/epoch=29_valid_metric=0.872.ckpt"
+    "./logs/image/nfl1/sorted_all/checkpoints/epoch=22_valid_metric=0.983.ckpt",
+    "./logs/image/b4ns/sorted_all/checkpoints/epoch=28_valid_metric=0.990.ckpt",
+    "./logs/image/ev2m/sorted_512_all/checkpoints/epoch=22_valid_metric=0.987.ckpt",
+    "./logs/image/200d/sorted_all/checkpoints/epoch=29_valid_metric=0.987.ckpt",
+    "./logs/image/swb/sorted_all/checkpoints/epoch=29_valid_metric=0.971.ckpt"
 ]
+
+model = ModelPred(**args)
+model.prepare_data()
 
 preds = []
 for ckpt in ckpts:
@@ -50,19 +51,7 @@ for ckpt in ckpts:
     model = model.load_from_checkpoint(ckpt, strict = False)
     pred = trainer.predict(model)
     pred = torch.cat(pred).softmax(1).detach().cpu().numpy()
+    np.save(f"./data/features/{'valid' if val else ('test' + ab)}_{ckpt.split('/')[2]}_{ckpt.split('/')[3]}_{ckpt.split('/')[4]}.npy", pred)
     preds.append(pred)
 
-preds = np.stack(preds)
-np.save(f"./data/features/{'valid' if val else ('test' + ab)}_img.npy", preds)
 
-preds_img = np.load(f"./data/features/{'valid' if val else ('test' + ab)}_img.npy")
-preds_tex = np.load(f"./data/features/{'valid' if val else ('test' + ab)}_tex.npy")
-
-preds = preds_img[-1:].mean(0) * 0.6# + preds_tex.mean(0) * 0.4
-preds = preds.argmax(1)
-gt = model.predict_dataloader().dataset.df.label
-accuracy_score(gt, preds)
-
-sub = pd.DataFrame({"image_id": model.predict_dataloader().dataset.df.file_name, "category_id": preds})
-sub.image_id = sub.image_id.apply(lambda x: x.split("/")[-1])
-sub.to_csv("submission.csv", index = False)
