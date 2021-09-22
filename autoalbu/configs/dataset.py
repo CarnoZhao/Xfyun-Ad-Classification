@@ -12,7 +12,7 @@ class SearchDataset(torch.utils.data.Dataset):
     def __init__(self, transform=None):
         self.transform = transform
         # Implement additional initialization logic if needed
-        file_names = glob.glob("/home/zhaoxun/codes/Ad/data/train/*/*.jpg")
+        file_names = glob.glob(os.path.join(os.path.basename(os.getcwd()), "data/train/*/*.jpg"))
         df = pd.DataFrame({"file_name": file_names})
         df["label"] = df.file_name.apply(lambda x: int(os.path.basename(os.path.dirname(x))))
         df = df[df.label < 60].reset_index(drop = True)
