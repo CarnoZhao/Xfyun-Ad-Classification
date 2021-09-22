@@ -50,10 +50,16 @@ All codes were writen with *semi-final test dataset*, named `test_B` or `testB` 
 
 - For **inferencing only**, *6-8G* GPU is enough.
 
+### 0.4 Training time
+
+- Using *2x TITAN RTX*, the training time per image model was 4~6h, and the training time per text model was 1~2h.
+
 
 ## 1. Data preprocessing
 
-### 1.1 Download data to `./data`, arranged as:
+### 1.1 Directory structure
+
+- Download data to `./data`, arranged as:
 
 ```
 |--data
@@ -74,7 +80,7 @@ All codes were writen with *semi-final test dataset*, named `test_B` or `testB` 
 
 - OCR codes were modified from open source github repo (`master` branch): [chineseocr_lite](https://github.com/DayBreak-u/chineseocr_lite.git)  (Thanks to authors)
 
-- OCR base codes are located at `./chineseocr_lite`. Compared with original repo, I only set configs in `./chineseocr_lite/config.py`, and removed useless codes and models. The changes are not included in this repo's history.
+- OCR base codes are located at `./chineseocr_lite`. Compared with original repo, I only changed configs in `./chineseocr_lite/config.py`, and removed useless codes and models. The changes are not included in this repo's history.
 
 - (**RUN**) 
 
@@ -90,7 +96,7 @@ This is to extract text information from `train` and `test_B` datasets. The resu
 
 - For detailed usage and installation, please refer to [autoalbument](https://albumentations.ai/docs/autoalbument/)
 
-    - There might be some conflits between `autoalbu`'s requirement of `pytorch-lightning` and the `pytorch-lightning` version of this repo. Please create an independent environment for `autoalbu` according to its own installation instruction.
+    - There might be some conflicts between `autoalbu`'s requirement of `pytorch-lightning` and the `pytorch-lightning` version of this repo. Please create an independent environment for `autoalbu` according to its own installation instruction.
 
 - The auto-albu codes are located at `./autoalbu`
 
@@ -115,11 +121,11 @@ autoalbument-search --config-dir configs
 
 - Ensemble image models and text models, and test ensemble results on leaderboard
 
-- Following the most basic **knowledge distilation** and **semi-supervised learning** strategy:
+- Following the most basic **knowledge distillation** and **semi-supervised learning** strategy:
 
     - use the softmax probability of ensemble prediction and training ground truth to train a smaller image model and a smaller text model.
 
-    - **knowledge distilation**: use larger model ensemble to train smaller model
+    - **knowledge distillation**: use larger model ensemble to train smaller model
 
     - **semi-supervised learning**: use soft-pseudo-label of unlabeled data to train model
 
@@ -233,7 +239,7 @@ python Solver_Image.py # should be run for five times
 
     - `args['model_name']` are three text model names mentioned above.
 
-    - `args['swa']` was set to `False` in `hfl/chinese-bert-wwm` (due to some bugs of my machine)
+    - `args['swa']` are set to `False` in `hfl/chinese-bert-wwm` (due to some bugs of my machine), and `True` in others.
 
     - `args['name']` should be different for three models. Here are my names:    
 
@@ -284,7 +290,7 @@ python Extractor_Text.py
 
 - Set saved features paths inside `Ensembler.py`
 
-- The ensemble procedure only used the simplest weighted average, because other complex method will decrease the accuracy performance.
+- The ensemble procedure only used the simplest weighted average, because other complex methods will decrease the accuracy performance.
 
 - (**RUN**)
 
@@ -295,11 +301,11 @@ python Ensembler.py
 
 - The ensembled soft-pseudo-label will be saved at `./data/pseudo`
 
-## 4.  Knowledge distilation + Semi-supervised learning
+## 4.  Knowledge distillation + Semi-supervised learning
 
 - Set the peuso-label numpy array path inside `Solver_Pseudo.py`
 
-- To balanced the inaccurate prediction of pseudo-label, we used less mixup, dropout and label smoothing.
+- To balance the inaccurate prediction of pseudo-label, we used less augmentation, mixup, dropout and label smoothing.
 
 - (**RUN**)
 
