@@ -128,7 +128,7 @@ args = dict(
     image_size = 384,
     drop_rate = 0.3,
     name = "image/b4ns",
-    version = "sorted_all_noclip"
+    version = "sorted_all"
 )
 args['trans_train'] = A.Compose([
     A.Resize(args['image_size'], args['image_size']),
@@ -163,7 +163,7 @@ if __name__ == "__main__":
         gpus = len(gpus.split(",")), 
         precision = 16, amp_backend = "native", amp_level = "O1", 
         accelerator = "dp",
-        gradient_clip_val = 0,
+        gradient_clip_val = 10,
         max_epochs = args["num_epochs"],
         stochastic_weight_avg = args["swa"],
         logger = logger,
