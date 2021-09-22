@@ -1,0 +1,13 @@
+learning_rate: 2.0e-05
+model_name: hfl/chinese-bert-wwm
+num_epochs: 30
+batch_size: 64
+fold: -1
+num_classes: 137
+smoothing: 0.1
+alpha: 0
+max_length: 256
+drop_rate: 0.3
+swa: false
+name: text/btwwm
+version: sorted_all
