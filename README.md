@@ -4,12 +4,16 @@ Codes for [**iFLYTEK AI开发者大赛 广告图片素材分类算法挑战赛**
 
 # Environment
 
+- install by conda or pip
+
 ```sh
-python=3.8.0
-torch=1.7.1
-pytorch_lightning=1.3.5
-timm=0.4.9
-cuda=11.0
+cuda=10.2
+python=3.8.0 # installed by conda
+torch=1.7.1  # installed by conda
+pytorch_lightning=1.4.5 # intalled by pip
+timm=0.4.9              # intalled by pip 
+transformers=4.9.2      # installed by pip
+albumentations=1.0.0    # installed by pip
 ```
 
 # External Utils
@@ -115,6 +119,8 @@ autoalbument-search --config-dir configs
 
 - For better git repo performance, I set `.gitignore` to ignore other outputs and moved the `./autoalbu/configs/outputs/{your_run_date}/{your_run_time}/policy/lasted.json` to `./autoalbu/configs/latest.json`.
 
+> NOTE:  When using learnt `autoalbu` policy, the path should be configured manually in training codes.
+
 ## 2. Model training
 
 ### 2.1 Main Idea
@@ -132,6 +138,10 @@ autoalbument-search --config-dir configs
     - **semi-supervised learning**: use pseudo-label of unlabeled data to train model
 
 - Ensemble the distilled image model and text model as final output
+
+<div align="center">
+  <img src="assets/pipeline.pdf" width="600"/>
+</div>
 
 ### 2.2 Image model training
 
