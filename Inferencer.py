@@ -9,8 +9,8 @@ if __name__ == "__main__":
     model_image = ei.ModelPred(tta = False, **ei.args)
     model_text = et.ModelPred(**et.args)
 
-    ckpt_image = "./logs/pseudo/b0ns_fitter/sorted_all/checkpoints/epoch=22_valid_metric=1.000.ckpt"
-    ckpt_text = "./logs/pseudo/rbt/sorted_all/checkpoints/epoch=29_valid_metric=0.966.ckpt"
+    ckpt_image = "./weights/pseudo_b0ns.ckpt"
+    ckpt_text = "./weights/pseudo_rbt.ckpt"
 
     model_image = model_image.load_from_checkpoint(ckpt_image)
     model_text = model_text.load_from_checkpoint(ckpt_text)
