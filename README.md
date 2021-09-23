@@ -20,17 +20,19 @@ cuda=11.0
 
 # Usage
 
-1. download datasets from official competition site
+1. Datasets from official competition site
 
-2. run `OCR.py` to get unordered texts from images (*run twice for training data and test data*)
+2. `OCR.py` for unordered texts from images (*run twice for training data and test data*)
 
-3. `SolverImage.py` for image classification training
+3. `Solver{Image|Text}.py` for image/text classification training
 
-4. `SolverText.py` for text classification training
+4. `Extractor{Image|Text}.py` for image/text softmax probabilities extraction
 
-5. `ExtractorText.py` for text softmax probabilities extraction
+5. `Ensembler.py` for multi-modality ensemble
 
-6. `ExtractorImage.py` for image softmax probabilities extraction and Image-Text multi-modality merge (simply weighted average)
+6. `Solver_{Image|Text}_Pseudo.py` for pseudo-label training of image/text model
+
+7. `Inferencer.py` for final prediction
 
 # Reproduce
 
@@ -123,11 +125,11 @@ autoalbument-search --config-dir configs
 
 - Following the most basic **knowledge distillation** and **semi-supervised learning** strategy:
 
-    - use the softmax probability of ensemble prediction and training ground truth to train a smaller image model and a smaller text model.
+    - use the pseudo-label of ensemble prediction and training ground truth to train a smaller image model and a smaller text model.
 
     - **knowledge distillation**: use larger model ensemble to train smaller model
 
-    - **semi-supervised learning**: use soft-pseudo-label of unlabeled data to train model
+    - **semi-supervised learning**: use pseudo-label of unlabeled data to train model
 
 - Ensemble the distilled image model and text model as final output
 
@@ -183,29 +185,17 @@ autoalbument-search --config-dir configs
 
         - `swin_base_patch4_window12_384`: "image/swb"
 
-- (**RUN**)
+- (**RUN FOR 5 TIMES**) 
+
+    - Set hyperparameters inside Solver_Image.py 
+
+    - Run command below for each model
 
 ```
-# set hyperparameters inside Solver_Image.py
-
-python Solver_Image.py # should be run for five times
-
-# all logs will be saved at "./logs/image/{args['name']}"
+python Solver_Image.py
 ```
 
-- Saved checkpoints for future usage:
-
-    
-    - `./logs/image/nfl1/sorted_all/checkpoints/epoch=22_valid_metric=0.983.ckpt`
-
-    - `./logs/image/b4ns/sorted_all/checkpoints/epoch=28_valid_metric=0.990.ckpt`
-
-    - `./logs/image/ev2m/sorted_512_all/checkpoints/epoch=22_valid_metric=0.987.ckpt`
-
-    - `./logs/image/200d/sorted_all/checkpoints/epoch=29_valid_metric=0.987.ckpt`
-
-    - `./logs/image/swb/sorted_all/checkpoints/epoch=29_valid_metric=0.971.ckpt`
-
+- All logs will be saved at `./logs/image/{args['name']}`
 
 ### 2.3 Text model training
 
@@ -249,24 +239,18 @@ python Solver_Image.py # should be run for five times
 
         - `hfl/chinese-bert-wwm`: "btwwm"
 
-- (**RUN**)
+- (**RUN FOR 3 TIMES**) 
+
+    - Set hyperparameters inside Solver_Text.py 
+
+    - Run command below for each model
 
 ```
-# set hyperparameters inside Solver_Text.py
-
-python Solver_Text.py # should be run for three times
-
-
-# all logs will be saved at "./logs/text/{args['name']}"
+python Solver_Text.py
 ```
 
-- Saved checkpoints for future usage:
+- All logs will be saved at `./logs/text/{args['name']}`
 
-    - `./logs/text/rbt/sorted_all/checkpoints/epoch=28_valid_metric=0.956.ckpt`
-
-    - `./logs/text/bt/sorted_all/checkpoints/epoch=29_valid_metric=0.966.ckpt`
-
-    - `./logs/text/btwwm/sorted_all/checkpoints/epoch=27_valid_metric=0.965.ckpt`
 
 ## 3. Multi-modality model ensemble
 
@@ -299,7 +283,7 @@ mkdir -p ./data/pseudo
 python Ensembler.py
 ```
 
-- The ensembled soft-pseudo-label will be saved at `./data/pseudo`
+- The ensembled pseudo-label will be saved at `./data/pseudo`
 
 ## 4.  Knowledge distillation + Semi-supervised learning
 
@@ -307,8 +291,29 @@ python Ensembler.py
 
 - To balance the inaccurate prediction of pseudo-label, we used less augmentation, mixup, dropout and label smoothing.
 
+- Model selection:
+
+    - For image model, I chose a liter one: `tf_efficientnet_b3_ns`
+
+    - For text model, since liter version `hfl/rbt3` did not perform well, I still used `hfl/chinese-roberta-wwm-ext`
+
 - (**RUN**)
 
 ```
-python Solver_Pseudo.py
+python Solver_Image_Pseudo.py
+python Solver_Text_Pseudo.py
 ```
+
+- The logs will be saved at `./logs/pseudo`
+
+## 5. Final prediction
+
+- Set pseudo-label trained model paths (image model & text model) inside `Inferencer.py`
+
+- (**RUN**)
+
+```
+python Inferencer.py
+```
+
+- The prediction result will be saved at `./submission.csv`, formatted following the submission requirement.
