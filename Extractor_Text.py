@@ -31,20 +31,21 @@ trainer = pl.Trainer(
     progress_bar_refresh_rate = 1
 )
 
-ckpts = [
-    "./logs/text/rbt/sorted_all/checkpoints/epoch=28_valid_metric=0.956.ckpt",
-    "./logs/text/bt/sorted_all/checkpoints/epoch=29_valid_metric=0.966.ckpt",
-    "./logs/text/btwwm/sorted_all/checkpoints/epoch=27_valid_metric=0.965.ckpt"
-]
+if __name__ == "__main__":
+    ckpts = [
+        "./logs/text/rbt/sorted_all/checkpoints/epoch=28_valid_metric=0.956.ckpt",
+        "./logs/text/bt/sorted_all/checkpoints/epoch=29_valid_metric=0.966.ckpt",
+        "./logs/text/btwwm/sorted_all/checkpoints/epoch=27_valid_metric=0.965.ckpt"
+    ]
 
-preds = []
-for ckpt in ckpts:
-    model = ModelPred(**args)
-    model = model.load_from_checkpoint(ckpt)
-    pred = trainer.predict(model)
-    pred = torch.cat(pred).softmax(1).detach().cpu().numpy()
-    np.save(f"./data/features/{'valid' if val else ('test' + ab)}_{ckpt.split('/')[2]}_{ckpt.split('/')[3]}_{ckpt.split('/')[4]}.npy", pred)
-    preds.append(pred)
+    preds = []
+    for ckpt in ckpts:
+        model = ModelPred(**args)
+        model = model.load_from_checkpoint(ckpt)
+        pred = trainer.predict(model)
+        pred = torch.cat(pred).softmax(1).detach().cpu().numpy()
+        np.save(f"./data/features/{'valid' if val else ('test' + ab)}_{ckpt.split('/')[2]}_{ckpt.split('/')[3]}_{ckpt.split('/')[4]}.npy", pred)
+        preds.append(pred)
 
 # preds = np.stack(preds)
 # np.save(f"./data/features/{'valid' if val else ('test' + ab)}_tex.npy", preds)

@@ -6,13 +6,14 @@ args["fold"] = 0
 
 class ModelPred(Model):
     classes = None
-    def __init__(self, **args):
+    def __init__(self, tta = True, **args):
+        self.tta = tta
         super(ModelPred, self).__init__(**args)
 
     def predict_step(self, batch, batch_idx):
         x, y = batch
         yhat = 0
-        xs = [x, x.flip(-1)]
+        xs = [x, x.flip(-1)] if self.tta else [x]
         for x in xs:
             yhat += self(x) / len(xs)
         return yhat
@@ -34,24 +35,25 @@ trainer = pl.Trainer(
     progress_bar_refresh_rate = 1
 )
 
-ckpts = [
-    "./logs/image/nfl1/sorted_all/checkpoints/epoch=22_valid_metric=0.983.ckpt",
-    "./logs/image/b4ns/sorted_all/checkpoints/epoch=28_valid_metric=0.990.ckpt",
-    "./logs/image/ev2m/sorted_512_all/checkpoints/epoch=22_valid_metric=0.987.ckpt",
-    "./logs/image/200d/sorted_all/checkpoints/epoch=29_valid_metric=0.987.ckpt",
-    "./logs/image/swb/sorted_all/checkpoints/epoch=29_valid_metric=0.971.ckpt"
-]
+if __name__ == "__main__":
+    ckpts = [
+        "./logs/image/nfl1/sorted_all/checkpoints/epoch=22_valid_metric=0.983.ckpt",
+        "./logs/image/b4ns/sorted_all/checkpoints/epoch=28_valid_metric=0.990.ckpt",
+        "./logs/image/ev2m/sorted_512_all/checkpoints/epoch=22_valid_metric=0.987.ckpt",
+        "./logs/image/200d/sorted_all/checkpoints/epoch=29_valid_metric=0.987.ckpt",
+        "./logs/image/swb/sorted_all/checkpoints/epoch=29_valid_metric=0.971.ckpt",
+    ]
 
-model = ModelPred(**args)
-model.prepare_data()
-
-preds = []
-for ckpt in ckpts:
     model = ModelPred(**args)
-    model = model.load_from_checkpoint(ckpt, strict = False)
-    pred = trainer.predict(model)
-    pred = torch.cat(pred).softmax(1).detach().cpu().numpy()
-    np.save(f"./data/features/{'valid' if val else ('test' + ab)}_{ckpt.split('/')[2]}_{ckpt.split('/')[3]}_{ckpt.split('/')[4]}.npy", pred)
-    preds.append(pred)
+    model.prepare_data()
+
+    preds = []
+    for ckpt in ckpts:
+        model = ModelPred(**args)
+        model = model.load_from_checkpoint(ckpt, strict = False)
+        pred = trainer.predict(model)
+        pred = torch.cat(pred).softmax(1).detach().cpu().numpy()
+        np.save(f"./data/features/{'valid' if val else ('test' + ab)}_{ckpt.split('/')[2]}_{ckpt.split('/')[3]}_{ckpt.split('/')[4]}.npy", pred)
+        preds.append(pred)
 
 
