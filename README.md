@@ -302,7 +302,7 @@ python Ensembler.py
 
 - Model selection:
 
-    - For image model, I chose a liter one: `tf_efficientnet_b3_ns`
+    - For image model, I chose a liter one: `tf_efficientnet_b0_ns`
 
     - For text model, since liter version `hfl/rbt3` did not perform well, I still used `hfl/chinese-roberta-wwm-ext`
 
