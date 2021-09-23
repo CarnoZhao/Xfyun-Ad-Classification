@@ -40,7 +40,7 @@ albumentations=1.0.0    # installed by pip
 
 # Reproduce
 
-## 0. Note:
+## **0. NOTE**:
 
 ### 0.1 Reproducibility
 
@@ -59,6 +59,16 @@ All codes were writen with *semi-final test dataset*, named `test_B` or `testB` 
 ### 0.4 Training time
 
 - Using *2x TITAN RTX*, the training time per image model was 4~6h, and the training time per text model was 1~2h.
+
+### 0.5 Training hyper-parameters
+
+- `autoalbu` policy (need training): `./autoalbu/configs/latest.json`
+
+- OCR config: `./chineseocr_lite/config.py`
+
+- Deep learning training: `./hparams/*.yaml`
+
+    - `yaml`s with `pseudo_` are for pseudo-label training
 
 
 ## 1. Data preprocessing
