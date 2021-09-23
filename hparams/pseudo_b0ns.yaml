@@ -1,0 +1,120 @@
+alpha: 0
+batch_size: 64
+classes: null
+drop_rate: 0.1
+fold: -1
+image_size: 384
+learning_rate: 0.001
+model_name: tf_efficientnet_b0_ns
+name: pseudo/b0ns_fitter
+num_classes: 137
+num_epochs: 5
+pseudo_from: ./data/pseudo/90655.npy
+smoothing: 0.0
+swa: false
+trans_train: !!python/object:albumentations.core.composition.Compose
+  additional_targets: {}
+  applied_in_replay: false
+  p: 1.0
+  processors: {}
+  replay_mode: false
+  transforms: !!python/object:albumentations.core.composition.Transforms
+    start_end:
+    - 0
+    - 1
+    transforms:
+    - !!python/object:albumentations.augmentations.geometric.resize.Resize
+      _additional_targets: {}
+      always_apply: false
+      applied_in_replay: false
+      deterministic: false
+      height: 384
+      interpolation: 1
+      p: 1
+      params: {}
+      replay_mode: false
+      save_key: replay
+      width: 384
+    - !!python/object:albumentations.augmentations.transforms.HorizontalFlip
+      _additional_targets: {}
+      always_apply: false
+      applied_in_replay: false
+      deterministic: false
+      p: 0.5
+      params: {}
+      replay_mode: false
+      save_key: replay
+    - !!python/object:albumentations.augmentations.transforms.Normalize
+      _additional_targets: {}
+      always_apply: false
+      applied_in_replay: false
+      deterministic: false
+      max_pixel_value: 255.0
+      mean: &id001 !!python/tuple
+      - 0.485
+      - 0.456
+      - 0.406
+      p: 1.0
+      params: {}
+      replay_mode: false
+      save_key: replay
+      std: &id002 !!python/tuple
+      - 0.229
+      - 0.224
+      - 0.225
+    - !!python/object:albumentations.pytorch.transforms.ToTensorV2
+      _additional_targets: {}
+      always_apply: true
+      applied_in_replay: false
+      deterministic: false
+      p: 1.0
+      params: {}
+      replay_mode: false
+      save_key: replay
+      transpose_mask: false
+trans_valid: !!python/object:albumentations.core.composition.Compose
+  additional_targets: {}
+  applied_in_replay: false
+  p: 1.0
+  processors: {}
+  replay_mode: false
+  transforms: !!python/object:albumentations.core.composition.Transforms
+    start_end:
+    - 0
+    - 0
+    transforms:
+    - !!python/object:albumentations.augmentations.geometric.resize.Resize
+      _additional_targets: {}
+      always_apply: false
+      applied_in_replay: false
+      deterministic: false
+      height: 384
+      interpolation: 1
+      p: 1
+      params: {}
+      replay_mode: false
+      save_key: replay
+      width: 384
+    - !!python/object:albumentations.augmentations.transforms.Normalize
+      _additional_targets: {}
+      always_apply: false
+      applied_in_replay: false
+      deterministic: false
+      max_pixel_value: 255.0
+      mean: *id001
+      p: 1.0
+      params: {}
+      replay_mode: false
+      save_key: replay
+      std: *id002
+    - !!python/object:albumentations.pytorch.transforms.ToTensorV2
+      _additional_targets: {}
+      always_apply: true
+      applied_in_replay: false
+      deterministic: false
+      p: 1.0
+      params: {}
+      replay_mode: false
+      save_key: replay
+      transpose_mask: false
+version: sorted_all

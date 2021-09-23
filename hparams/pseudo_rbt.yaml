@@ -1,0 +1,14 @@
+learning_rate: 2.0e-05
+model_name: hfl/chinese-roberta-wwm-ext
+num_epochs: 30
+batch_size: 64
+fold: -1
+num_classes: 137
+smoothing: 0.0
+alpha: 0
+max_length: 256
+drop_rate: 0.1
+swa: false
+pseudo_from: ./data/pseudo/90655.npy
+name: pseudo/rbt
+version: sorted_all
