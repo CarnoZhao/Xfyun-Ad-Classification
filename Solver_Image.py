@@ -1,4 +1,4 @@
-gpus = "2,3"
+gpus = "1"
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = gpus
 import warnings
@@ -132,17 +132,6 @@ args = dict(
 )
 args['trans_train'] = A.Compose([
     A.Resize(args['image_size'], args['image_size']),
-    # A.HorizontalFlip(),
-    # A.OneOf([
-    #     A.RandomBrightnessContrast(),
-    #     A.HueSaturationValue(),
-    # ], p = 0.9),
-    # A.OneOf([
-    #     A.GridDistortion(),
-    #     A.OpticalDistortion(),
-    # ], p = 0.9),
-    # A.Normalize(),
-    # ToTensorV2()])
     A.load("./autoalbu/configs/outputs/2021-08-20/17-51-27/policy/latest.json")])
 args['trans_valid'] = A.Compose([
     A.Resize(args['image_size'], args['image_size']),
