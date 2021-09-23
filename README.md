@@ -139,9 +139,8 @@ autoalbument-search --config-dir configs
 
 - Ensemble the distilled image model and text model as final output
 
-<div align="center">
-  <img src="assets/pipeline.pdf" width="600"/>
-</div>
+![pipeline](assets/pipeline.jpg)
+_Pipeline_
 
 ### 2.2 Image model training
 
