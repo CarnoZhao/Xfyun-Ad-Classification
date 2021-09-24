@@ -2,6 +2,16 @@
 
 Codes for [**iFLYTEK AI开发者大赛 广告图片素材分类算法挑战赛**](https://challenge.xfyun.cn/topic/info?type=ad-2021)
 
+# **Table of Contents**
+- [Environment](#environment) 
+
+- [External Utils](#external-utils) 
+
+- [Simple Usage](#usage)
+
+- [**Reproduce**](#reproduce)
+
+
 # Environment
 
 - install by conda or pip
@@ -10,8 +20,8 @@ Codes for [**iFLYTEK AI开发者大赛 广告图片素材分类算法挑战赛**
 cuda=10.2
 python=3.8.0 # installed by conda
 torch=1.7.1  # installed by conda
-pytorch_lightning=1.4.5 # intalled by pip
-timm=0.4.9              # intalled by pip 
+pytorch_lightning=1.4.5 # installed by pip
+timm=0.4.9              # installed by pip 
 transformers=4.9.2      # installed by pip
 albumentations=1.0.0    # installed by pip
 ```
@@ -39,6 +49,10 @@ albumentations=1.0.0    # installed by pip
 7. `Inferencer.py` for final prediction
 
 # Reproduce
+
+> TLDR: Since the intermediate models are too large, I only provided final pseudo-label trained models, saved in `./weights`. So full training logs are not available. For inference only, just `python Inferencer.py`, and the result will be saved as `./submission.csv`.
+
+---
 
 ## **0. NOTE**:
 
@@ -69,7 +83,7 @@ All codes were writen with *semi-final test dataset*, named `test_B` or `testB` 
 - Deep learning training: `./hparams/*.yaml`
 
     - `yaml`s with `pseudo_` are for pseudo-label training
-
+---
 
 ## 1. Data preprocessing
 
@@ -130,6 +144,8 @@ autoalbument-search --config-dir configs
 - For better git repo performance, I set `.gitignore` to ignore other outputs and moved the `./autoalbu/configs/outputs/{your_run_date}/{your_run_time}/policy/lasted.json` to `./autoalbu/configs/latest.json`.
 
 > NOTE:  When using learnt `autoalbu` policy, the path should be configured manually in training codes.
+
+---
 
 ## 2. Model training
 
@@ -270,6 +286,7 @@ python Solver_Text.py
 
 - All logs will be saved at `./logs/text/{args['name']}`
 
+---
 
 ## 3. Multi-modality model ensemble
 
@@ -304,6 +321,8 @@ python Ensembler.py
 
 - The ensembled pseudo-label will be saved at `./data/pseudo`
 
+---
+
 ## 4.  Knowledge distillation + Semi-supervised learning
 
 - Set the peuso-label numpy array path inside `Solver_Pseudo.py`
@@ -325,6 +344,8 @@ python Solver_Text_Pseudo.py
 
 - The logs will be saved at `./logs/pseudo`
 
+---
+
 ## 5. Final prediction
 
 - Set pseudo-label trained model paths (image model & text model) inside `Inferencer.py`
@@ -336,3 +357,5 @@ python Inferencer.py
 ```
 
 - The prediction result will be saved at `./submission.csv`, formatted following the submission requirement.
+
+---
