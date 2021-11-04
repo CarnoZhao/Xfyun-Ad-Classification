@@ -1,5 +1,9 @@
 [中文README](https://github.com/CarnoZhao/Xfyun-Ad-Classification/blob/main/README-zh-cn.md)
 
+# Update
+
+Presentation PPT provided!
+
 # Xfyun-Ad-Classification
 
 Codes for [**iFLYTEK AI开发者大赛 广告图片素材分类算法挑战赛**](https://challenge.xfyun.cn/topic/info?type=ad-2021)
