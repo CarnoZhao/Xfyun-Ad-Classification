@@ -2,6 +2,10 @@
 
 [**iFLYTEK AI开发者大赛 广告图片素材分类算法挑战赛**](https://challenge.xfyun.cn/topic/info?type=ad-2021)代码
 
+# 更新
+
+PPT已提供
+
 # **目录**
 - [环境](#环境) 
 
